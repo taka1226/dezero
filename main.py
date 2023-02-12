@@ -1,5 +1,10 @@
+import numpy as np
+
 class Variable:
     def __init__(self, data):
+        if data is not None:
+            if not isinstance(data, np.ndarray):
+                raise TypeError('{} is not supported'.format(type(data)))
         self.data = data
         self.grad = None
         self.creator = None
@@ -7,11 +12,24 @@ class Variable:
     def set_crator(self, func):
         self.creator = func
 
+    def backward(self):
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
+        funcs = [self.creator]
+        while funcs:
+            f = funcs.pop() # 関数を取得
+            x, y = f.input, f.output
+            x.grad = f.backward(y.grad)
+            if x.creator is not None:
+                funcs.append(x.creator)
+
+
 class Function:
     def __call__(self, input):
         x = input.data
         y = self.forward(x)
-        output = Variable(y)
+        output = Variable(as_array(y))
         output.set_crator(self) # 出力変数に生みの親を覚えさせる
         self.input = input
         self.output = output # 出力も覚える
@@ -53,18 +71,53 @@ def numerical_diff(f, x, eps=1e-4):
     return (y1.data - y0.data) / (2 * eps)
 
 
-import numpy as np
-A = Square()
-B = Exp()
-C = Square()
+def square(x):
+    f = Square()
+    return f(x)
 
-x = Variable(np.array(0.5))
-a = A(x)
-b = B(a)
-y = C(b)
+def exp(x):
+    f = Exp()
+    return f(x)
 
-y.grad = np.array(1.0)
-b.grad = C.backward(y.grad)
-a.grad = B.backward(b.grad)
-x.grad = A.backward(a.grad)
-print(x.grad)
+def as_array(x):
+    if np.isscalar(x):
+        return np.array(x)
+    return x
+
+# def main():
+#     x = Variable(np.array(0.5))
+#     y = square(x)
+#     y.backward()
+#     print(type(x.grad))
+#     print(type(x.data))
+#     # y = square(exp(square(x)))
+#     # y.backward()
+#     # print(type(x.grad))
+#     # print(type(y.data))
+#
+# if __name__ == "__main__":
+#     main()
+
+
+import unittest
+class SquareTest(unittest.TestCase):
+    def test_forward(self):
+        x = Variable(np.array(2.0))
+        y = square(x)
+        expected = np.array(4.0)
+        self.assertEqual(y.data, expected)
+
+    def test_backward(self):
+        x = Variable(np.array(3.0))
+        y = square(x)
+        y.backward()
+        expected = np.array(6.0)
+        self.assertEqual(x.grad, expected)
+
+    def test_gradient_check(self):
+        x = Variable(np.random.rand(1))
+        y = square(x)
+        y.backward()
+        num_grad = numerical_diff(square, x)
+        flg = np.allclose(x.grad, num_grad)
+        self.assertTrue(flg)
