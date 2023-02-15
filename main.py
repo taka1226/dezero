@@ -1,4 +1,5 @@
 import numpy as np
+import weakref
 
 class Variable:
     def __init__(self, data):
@@ -8,18 +9,30 @@ class Variable:
         self.data = data
         self.grad = None
         self.creator = None
+        self.generation = 0
 
-    def set_crator(self, func):
+    def set_creator(self, func):
         self.creator = func
+        self.generation = func.generation + 1
 
     def backward(self):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        funcs = [self.creator]
+        funcs = []
+        seen_set = set()
+
+        def add_func(f):
+            if f not in seen_set:
+                funcs.append(f)
+                seen_set.add(f)
+                funcs.sort(key=lambda x: x.generation)
+
+        add_func(self.creator)
+
         while funcs:
             f = funcs.pop() # 関数を取得
-            gys = [output.grad for output in f.outputs]
+            gys = [output().grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs, )
@@ -29,7 +42,7 @@ class Variable:
                 else:
                     x.grad = x.grad + gx
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    add_func(x.creator)
 
     def cleargrad(self):
         self.grad = None
@@ -44,10 +57,11 @@ class Function:
             ys = (ys, )
         outputs = [Variable(as_array(y)) for y in ys]
 
+        self.generation = max([x.generation for x in inputs])
         for output in outputs:
-            output.set_crator(self)
+            output.set_creator(self)
         self.inputs = inputs
-        self.outputs = outputs # 出力も覚える
+        self.outputs = [weakref.ref(output) for output in outputs]
 
         # リストの要素が一つのときは最初の要素を返す
         return outputs if len(outputs) > 1 else outputs[0]
@@ -112,16 +126,14 @@ def as_array(x):
         return np.array(x)
     return x
 
-def main():
-    x = Variable(np.array(3.0))
-    y = add(x, x)
-    y.backward()
-    print(x.grad)
 
-    x.cleargrad()
-    y = add(add(x, x), x)
-    y.backward()
-    print(x.grad)
+from memory_profiler import profile
+
+@profile
+def main():
+    for i in range(10):
+        x = Variable(np.random.randn(10000))
+        y = square(square(square(x)))
 
 
 if __name__ == "__main__":
