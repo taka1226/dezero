@@ -4,14 +4,9 @@ from functions import *
 
 
 def main():
-    a = Variable(np.array(3.0))
-    b = Variable(np.array(2.0))
-    c = Variable(np.array(1.0))
-    y = a * b + c
-    y.backward()
+    x = Variable(np.array(2.0))
+    y = x ** 3
     print(y)
-    print(a.grad)
-    print(b.grad)
 
 
 
