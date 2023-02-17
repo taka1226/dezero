@@ -1,5 +1,3 @@
-
-
 # ２乗
 class Square(Function):
     def forward(self, x):
