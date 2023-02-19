@@ -2,6 +2,8 @@ import numpy as np
 from dezero import Variable
 from dezero.utils import get_dot_graph
 from dezero.utils import plot_dot_graph
+from dezero.functions import sin
+import math
 
 
 def sphere(x, y):
@@ -17,16 +19,31 @@ def goldstein(x, y):
         (30 + (2*x - 3*y)**2 * (18 - 32*x + 12*x**2 + 48*y - 36*x*y + 27*y**2))
     return z
 
+def my_sin(x, threshold=0.0001):
+    y = 0
+    for i in range(100000):
+        c = (-1) ** i / math.factorial(2 * i + 1)
+        t = c * x ** (2 * i + 1)
+        y = y + t
+        if abs(t.data) < threshold:
+            break
+    return y
 
-x = Variable(np.array(1.0))
-y = Variable(np.array(1.0))
-z = goldstein(x, y)
-z.backward()
+x = Variable(np.array(np.pi / 4))
+y = my_sin(x)
+y.backward()
 
-x.name = 'x'
-y.name = 'y'
-z.name = 'z'
-plot_dot_graph(z, verbose=False, to_file='goldstein.png')
+plot_dot_graph(y, verbose=False, to_file='my_sin.png')
+
+# x = Variable(np.array(1.0))
+# y = Variable(np.array(1.0))
+# z = goldstein(x, y)
+# z.backward()
+#
+# x.name = 'x'
+# y.name = 'y'
+# z.name = 'z'
+# plot_dot_graph(z, verbose=False, to_file='goldstein.png')
 
 # x = Variable(np.array(1.0))
 # y = Variable(np.array(1.0))
