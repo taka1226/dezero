@@ -1,17 +1,6 @@
 import numpy as np
 from dezero import Function
 
-# ２乗
-class Square(Function):
-    def forward(self, x):
-        y = x ** 2
-        return y
-
-    def backward(self, gy):
-        x = self.inputs[0].data
-        gx = 2 * x * gy
-        return gx
-
 # exp
 class Exp(Function):
     def forward(self, x):
@@ -31,13 +20,40 @@ class Sin(Function):
         return y
 
     def backward(self, gy):
-        x = self.inputs[0].data
-        gx = gy * np.cos(x)
+        x, = self.inputs
+        gx = gy * cos(x)
         return gx
 
+
+class Cos(Function):
+    def forward(self, x):
+        y = np.cos(x)
+        return y
+
+    def backward(self, gy):
+        x, = self.inputs
+        gx = gy * -sin(x)
+        return gx
+
+
+class Tanh(Function):
+    def forward(self, x):
+        y = np.tanh(x)
+        return y
+
+    def backward(self, gy):
+        y = self.outputs[0]()
+        gx = gy * (1 - y * y)
+        return gx
 
 def exp(x):
     return Exp()(x)
 
 def sin(x):
     return Sin()(x)
+
+def cos(x):
+    return Cos()(x)
+
+def tanh(x):
+    return Tanh()(x)

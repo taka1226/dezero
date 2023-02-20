@@ -2,8 +2,10 @@ import numpy as np
 from dezero import Variable
 from dezero.utils import get_dot_graph
 from dezero.utils import plot_dot_graph
-from dezero.functions import sin
+from dezero.utils import numerical_diff
+import dezero.functions as F
 import math
+import matplotlib.pyplot as plt
 
 
 def sphere(x, y):
@@ -29,38 +31,18 @@ def my_sin(x, threshold=0.0001):
             break
     return y
 
-x = Variable(np.array(np.pi / 4))
-y = my_sin(x)
-y.backward()
-
-plot_dot_graph(y, verbose=False, to_file='my_sin.png')
-
-# x = Variable(np.array(1.0))
-# y = Variable(np.array(1.0))
-# z = goldstein(x, y)
-# z.backward()
-#
-# x.name = 'x'
-# y.name = 'y'
-# z.name = 'z'
-# plot_dot_graph(z, verbose=False, to_file='goldstein.png')
-
-# x = Variable(np.array(1.0))
-# y = Variable(np.array(1.0))
-# z = sphere(x, y)
-# z.backward()
-# print(x.grad, y.grad)
 
 
-# x = Variable(np.array(1.0))
-# y = Variable(np.array(1.0))
-# z = matyas(x, y)
-# z.backward()
-# print(x.grad, y.grad)
+def main():
+    x = Variable(np.array([[1.0, 2.0], [2.0, 3.0]]))
+    f = F.tanh
+    y = f(x)
+    y.backward(create_graph=True)
+    gx = x.grad
+    expected = numerical_diff(f, x)
 
+    print(gx)
+    print(expected)
 
-# x = Variable(np.array(1.0))
-# y = Variable(np.array(1.0))
-# z = goldstein(x, y)
-# z.backward()
-# print(x.grad, y.grad)
+if __name__ == "__main__":
+    main()
