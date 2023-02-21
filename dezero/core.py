@@ -1,6 +1,7 @@
 import contextlib
 import weakref
 import numpy as np
+import dezero
 
 # ================================================
 # Config クラス
@@ -61,6 +62,10 @@ class Variable:
     def dtype(self):
         return self.data.dtype
 
+    @property
+    def T(self):
+        return dezero.functions.transpose(self)
+
     def set_creator(self, func):
         self.creator = func
         self.generation = func.generation + 1
@@ -102,6 +107,14 @@ class Variable:
 
     def cleargrad(self):
         self.grad = None
+
+    def reshape(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        return dezero.functions.reshape(self, shape)
+
+    def transpose(self):
+        return dezero.functions.transpose(self)
 
 
 def as_array(x):

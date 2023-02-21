@@ -34,15 +34,11 @@ def my_sin(x, threshold=0.0001):
 
 
 def main():
-    x = Variable(np.array([[1.0, 2.0], [2.0, 3.0]]))
-    f = F.tanh
-    y = f(x)
-    y.backward(create_graph=True)
-    gx = x.grad
-    expected = numerical_diff(f, x)
-
-    print(gx)
-    print(expected)
+    A, B, C, D = 1, 2, 3, 4
+    x = np.random.rand(A, B, C, D)
+    y = x.transpose(1, 0, 3, 2)
+    print(x)
+    print(y)
 
 if __name__ == "__main__":
     main()
